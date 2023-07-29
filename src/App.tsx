@@ -1,25 +1,55 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react'
-import {FileRejection, useDropzone} from 'react-dropzone'
-import './App.css';
-import axios from "axios";
-import {useAuth} from "./Context/ContextProvider";
+import React, {useEffect, useState} from 'react'
+import './App.css'
+import axios from "axios"
+import {useAuth} from "./Context/ContextProvider"
+import DragField from "./components/DragField/DragField";
+import Box from "@mui/material/Box";
+import Login from "./components/LogIn/Login";
+import {Button} from "@mui/material";
+import ListElms from "./components/ListElms/ListElms";
+import {generateRandomString} from "./utils/getRandomString";
+
+export type file = {
+    path: string
+    lastModified: number
+    lastModifiedDate: object
+    name: string
+    size: number
+    type: string
+    webkitRelativePath: string
+}
+
+export type itemConstructArr = { id: string, file: file, state: stateLoad }
+
+export type stateLoad = 'wait' | 'load' | 'finish' | 'err'
+
+export type files = file[]
 
 function App() {
-    const [files, setFiles] = useState<any>([])
+    const [files, setFiles] = useState<files>([])
     const {token, setToken} = useAuth()
-    const refIn = useRef(null)
-    const onDrop = useCallback((acceptedFiles: File[], rejection: FileRejection[]) => {
-        console.log('FILES', acceptedFiles, rejection)
-        setFiles(acceptedFiles)
-    }, [])
-    const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
+    const [constructFiles, setConstructFiles] = useState<Array<itemConstructArr>>([])
+
 
     const link = window.location.href
 
-    const postFiles = () => {
-        const formData = new FormData();
-        formData.append('file', files);
-        console.log('token', token)
+    const generateArrFiles = (arrFiles: files) => {
+        const constructArr: Array<itemConstructArr> = arrFiles.map((v) => {
+            return {id: generateRandomString(), file: v, state: 'wait'}
+        })
+        setConstructFiles([...constructArr])
+    }
+
+    const loadFiles = (files: Array<itemConstructArr>) => {
+        files.forEach((value) => {
+            postFiles(value.file)
+        })
+    }
+
+    const postFiles = (file: any) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        console.log('token', token, file)
         const regex = /^(https?:\/\/[^/:]+)/
         const match = window.location.href.match(regex)
         if (!match) return
@@ -30,23 +60,17 @@ function App() {
         })
             .then(response => {
                 console.log('Успешная отправка на сервер', response.data.message)
+                file.state = 'finish'
             })
             .catch(error => {
                 console.error('Ошибка при отправке файла на сервер:', error)
-            });
-    }
-
-    const loadFiles: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-        if (!e.target.files) return
-        const file = e.target.files[0]
-        console.log('files', e.target.files)
-        setFiles(file)
+            })
     }
 
     useEffect(() => {
-        const regex = /access_token=([^&]+)/;
-        const match = link.match(regex);
-        const token = match ? match[1] : null;
+        const regex = /access_token=([^&]+)/
+        const match = link.match(regex)
+        const token = match ? match[1] : null
         token && setToken(token)
     }, [link])
 
@@ -58,20 +82,26 @@ function App() {
             window.history.replaceState({}, document.title, match[1])
         }
     }, [])
+
+    useEffect(() => {
+        console.log('constr', constructFiles)
+    }, [constructFiles])
+
+    useEffect(() => {
+        generateArrFiles(files)
+    }, [files])
     return (
-        <div className="App">
-            <input onChange={loadFiles} ref={refIn} type={'file'}/>
-            <div {...getRootProps()}>
-                <input {...getInputProps()} />
-                {
-                    isDragActive ?
-                        <p>Drop the files here ...</p> :
-                        <p>Drag 'n' drop some files here, or click to select files</p>
-                }
-            </div>
-            <a href={'https://oauth.yandex.ru/authorize?response_type=token&client_id=66b44391b888425499c760e82fc04d14'}>Link</a>
-            <button onClick={postFiles}>Load...</button>
-        </div>
+        <Box className="App">
+            <header>
+                <Login/>
+            </header>
+            <DragField setFiles={setFiles}/>
+            <ListElms listFiles={constructFiles}/>
+            <Button disabled={constructFiles.length === 0} onClick={() => loadFiles(constructFiles)}>
+                Загрузить. Количество
+                выбранных элементов: {constructFiles.length}
+            </Button>
+        </Box>
     );
 }
 

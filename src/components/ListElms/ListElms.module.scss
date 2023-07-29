@@ -1,0 +1,13 @@
+.item {
+  position: relative;
+  margin-bottom: 10px;
+  &:before{
+    content: '';
+    position: absolute;
+    width: 100%;
+    background-color: white;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+  }
+}
