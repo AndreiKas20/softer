@@ -25,10 +25,22 @@ export type stateLoad = 'wait' | 'load' | 'finish' | 'err'
 
 export type files = file[]
 
+const changeArrFunc = (arr: Array<itemConstructArr>, state: stateLoad, item: itemConstructArr) => {
+    return arr.map((v) => {
+        if (item.id === v.id) {
+            v.state = state
+            return v
+        } else {
+            return v
+        }
+    })
+}
+
 function App() {
     const [files, setFiles] = useState<files>([])
     const {token, setToken} = useAuth()
     const [constructFiles, setConstructFiles] = useState<Array<itemConstructArr>>([])
+    const [isBtnDisabled, setIsBtnDisabled] = useState(false)
 
 
     const link = window.location.href
@@ -42,13 +54,15 @@ function App() {
 
     const loadFiles = (files: Array<itemConstructArr>) => {
         files.forEach((value) => {
-            postFiles(value.file)
+            const arr = changeArrFunc(constructFiles, 'load', value)
+            setConstructFiles([...arr])
+            postFiles(value)
         })
     }
 
     const postFiles = (file: any) => {
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', file.file)
         console.log('token', token, file)
         const regex = /^(https?:\/\/[^/:]+)/
         const match = window.location.href.match(regex)
@@ -61,8 +75,12 @@ function App() {
             .then(response => {
                 console.log('Успешная отправка на сервер', response.data.message)
                 file.state = 'finish'
+                const arr = changeArrFunc(constructFiles, 'finish', file)
+                setConstructFiles([...arr])
             })
             .catch(error => {
+                const arr = changeArrFunc(constructFiles, 'err', file)
+                setConstructFiles([...arr])
                 console.error('Ошибка при отправке файла на сервер:', error)
             })
     }
@@ -83,24 +101,31 @@ function App() {
         }
     }, [])
 
-    useEffect(() => {
-        console.log('constr', constructFiles)
-    }, [constructFiles])
 
     useEffect(() => {
         generateArrFiles(files)
     }, [files])
+
+    useEffect(() => {
+        if (constructFiles.length === 0 || constructFiles.length >= 100 || !token) {
+            setIsBtnDisabled(true)
+        } else {
+            setIsBtnDisabled(false)
+        }
+    }, [constructFiles, token])
     return (
         <Box className="App">
-            <header>
-                <Login/>
-            </header>
-            <DragField setFiles={setFiles}/>
-            <ListElms listFiles={constructFiles}/>
-            <Button disabled={constructFiles.length === 0} onClick={() => loadFiles(constructFiles)}>
-                Загрузить. Количество
-                выбранных элементов: {constructFiles.length}
-            </Button>
+            <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                <header>
+                    <Login/>
+                </header>
+                <DragField setFiles={setFiles}/>
+                <ListElms listFiles={constructFiles}/>
+                <Button disabled={isBtnDisabled} onClick={() => loadFiles(constructFiles)}>
+                    Загрузить. Количество
+                    выбранных элементов: {constructFiles.length}
+                </Button>
+            </div>
         </Box>
     );
 }

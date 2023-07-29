@@ -23,37 +23,39 @@ const ListItems = ({listFiles}: IListItem) => {
         setArr(listFiles)
     }, [listFiles])
     return (
-           <Container maxWidth="sm">
-               <Box sx={{bgcolor: '#cfe8fc', borderRadius: '18px', padding: '25px'}}>
-                   <List sx={{width: '100%', maxWidth: 660, bgcolor: 'none'}}>
-                       {arr.map(({id, file, state}) => (
-                           <ListItem
-                               className={styles.item}
-                               key={id}
-                               disableGutters
-                               secondaryAction={
-                                   <IconButton aria-label="comment">
-                                       {
-                                           state === 'load' && <CircularProgress sx={{height: '50%'}} />
-                                       }
-                                       {
-                                           state === 'finish' && <CheckCircleOutlineIcon fontSize={'large'} color={'success'}/>
-                                       }
-                                       {
-                                           state === 'wait' && <HourglassEmptyIcon fontSize={'large'} color={'warning'}/>
-                                       }
-                                       {
-                                           state === 'err' && <ErrorOutlineIcon fontSize={'large'} color={'error'}/>
-                                       }
-                                   </IconButton>
-                               }
-                           >
-                               <ListItemText sx={{color: '#448f88', fontSize: '28px'}} primary={`Наименование файла: ${file.name}`}/>
-                           </ListItem>
-                       ))}
-                   </List>
-               </Box>
-           </Container>
+        <Container maxWidth="sm">
+            <Box sx={{bgcolor: '#cfe8fc', borderRadius: '18px', padding: '25px'}}>
+                <List sx={{width: '100%', maxWidth: 660, bgcolor: 'none'}}>
+                    {arr.map(({id, file, state}) => (
+                        <ListItem
+                            className={styles.item}
+                            key={id}
+                            disableGutters
+                            secondaryAction={
+                                <IconButton aria-label="comment">
+                                    {
+                                        state === 'load' && <CircularProgress sx={{height: '50%'}}/>
+                                    }
+                                    {
+                                        state === 'finish' &&
+                                        <CheckCircleOutlineIcon fontSize={'large'} color={'success'}/>
+                                    }
+                                    {
+                                        state === 'wait' && <HourglassEmptyIcon fontSize={'large'} color={'warning'}/>
+                                    }
+                                    {
+                                        state === 'err' && <ErrorOutlineIcon fontSize={'large'} color={'error'}/>
+                                    }
+                                </IconButton>
+                            }
+                        >
+                            <ListItemText sx={{color: '#448f88', fontSize: '28px'}}
+                                          primary={`Наименование файла: ${file.name}`}/>
+                        </ListItem>
+                    ))}
+                </List>
+            </Box>
+        </Container>
     );
 };
 
